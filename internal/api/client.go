@@ -7,11 +7,12 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"os"
 	"strings"
 	"time"
 
 	"passenger-go-cli/internal/config"
+
+	"github.com/urfave/cli/v2"
 )
 
 type Client struct {
@@ -22,14 +23,12 @@ type Client struct {
 func GetClient() *Client {
 	configuration, err := config.LoadConfig()
 	if err != nil {
-		fmt.Println("Failed to load config file")
-		os.Exit(1)
+		cli.Exit("❌ Failed to load config file", 1)
 	}
 
 	baseURL := configuration.ServerURL
 	if baseURL == "" {
-		fmt.Println("Server URL not configured, please use `passenger server <server-url>` to configure the server URL")
-		os.Exit(1)
+		cli.Exit("❌ Server URL not configured, please use `passenger server <server-url>` to configure the server URL", 1)
 	}
 
 	baseURL = strings.TrimSuffix(baseURL, "/")
@@ -160,14 +159,6 @@ func (client *Client) Delete(
 	}
 
 	return resp, nil
-}
-
-func (client *Client) SetAuthToken(
-	token string,
-) *http.Request {
-	req, _ := http.NewRequest("GET", "", nil)
-	req.Header.Set("Cookie", "token="+token)
-	return req
 }
 
 func (client *Client) DoWithAuth(

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"os"
 	"passenger-go-cli/cmd"
 
@@ -15,11 +14,11 @@ func main() {
 			cmd.ServerCommand(),
 			cmd.LoginCommand(),
 		},
+		EnableBashCompletion: true,
 	}
 
 	err := app.Run(os.Args)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
+		cli.Exit(err.Error(), 1)
 	}
 }

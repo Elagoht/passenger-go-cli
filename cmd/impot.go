@@ -14,11 +14,11 @@ func ImportCommand() *cli.Command {
 		Action: func(c *cli.Context) error {
 			filePath := c.Args().Get(0)
 			if filePath == "" {
-				return cli.Exit("CSV file path is required", 1)
+				return cli.Exit("❌ CSV file path is required", 1)
 			}
 
 			if _, err := os.Stat(filePath); os.IsNotExist(err) {
-				return cli.Exit("File not found: "+filePath, 1)
+				return cli.Exit("❌ File not found: "+filePath, 1)
 			}
 
 			// api.ImportCSV(filePath)
