@@ -12,7 +12,9 @@ func main() {
 		Name: "passenger",
 		Commands: []*cli.Command{
 			cmd.ServerCommand(),
+			cmd.StatusCommand(),
 			cmd.LoginCommand(),
+			cmd.RegisterCommand(),
 		},
 		EnableBashCompletion: true,
 	}

@@ -72,7 +72,7 @@ func (client *Client) Get(
 
 func (client *Client) Post(
 	endpoint string,
-	payload any,
+	payload map[string]string,
 ) (*http.Response, error) {
 	fullURL, err := client.buildURL(endpoint)
 	if err != nil {
