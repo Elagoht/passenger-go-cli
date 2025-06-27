@@ -5,8 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 
 	"passenger-go-cli/internal/config"
@@ -131,7 +133,8 @@ func (client *Client) executeRequest(
 ) error {
 	response, err := client.HTTPClient.Do(request)
 	if err != nil {
-		return fmt.Errorf("request failed: %w", err)
+		// Provide meaningful error messages for common network issues
+		return client.wrapNetworkError(err, request.URL.Host)
 	}
 	defer response.Body.Close()
 
@@ -144,7 +147,8 @@ func (client *Client) executeRequest(
 	if response.StatusCode >= 400 {
 		var apiError schemas.ResponseError
 		if err := json.Unmarshal(body, &apiError); err != nil {
-			return fmt.Errorf("HTTP %d: %s", response.StatusCode, string(body))
+			// If we can't parse as JSON, provide a clean error message based on status code
+			return client.formatHTTPError(response.StatusCode, request.URL.Path)
 		}
 		return fmt.Errorf("API error (%d): %s", response.StatusCode, apiError.Message)
 	}
@@ -157,6 +161,111 @@ func (client *Client) executeRequest(
 	}
 
 	return nil
+}
+
+// wrapNetworkError provides user-friendly error messages for network issues
+func (client *Client) wrapNetworkError(err error, host string) error {
+	if err == nil {
+		return nil
+	}
+
+	errMsg := err.Error()
+
+	// DNS resolution failure
+	if strings.Contains(errMsg, "no such host") {
+		return fmt.Errorf("❌ Cannot reach server at '%s'. Please check:\n"+
+			"  • The server URL is correct\n"+
+			"  • You have internet connectivity\n"+
+			"  • The domain exists and is accessible\n\n"+
+			"Use 'passenger server <correct-url>' to update the server URL", host)
+	}
+
+	// Connection refused
+	if strings.Contains(errMsg, "connection refused") {
+		return fmt.Errorf("❌ Server at '%s' refused the connection. Please check:\n"+
+			"  • The server is running\n"+
+			"  • The port is correct\n"+
+			"  • No firewall is blocking the connection", host)
+	}
+
+	// Timeout errors
+	if strings.Contains(errMsg, "timeout") || strings.Contains(errMsg, "context deadline exceeded") {
+		return fmt.Errorf("❌ Request to '%s' timed out. Please check:\n"+
+			"  • Your internet connection\n"+
+			"  • The server is responding\n"+
+			"  • Try again in a moment", host)
+	}
+
+	// SSL/TLS errors
+	if strings.Contains(errMsg, "certificate") || strings.Contains(errMsg, "tls") {
+		return fmt.Errorf("❌ SSL/TLS error connecting to '%s'. Please check:\n"+
+			"  • The server has a valid SSL certificate\n"+
+			"  • The URL uses the correct protocol (https/http)", host)
+	}
+
+	// Network unreachable
+	if strings.Contains(errMsg, "network is unreachable") {
+		return fmt.Errorf("❌ Network unreachable. Please check your internet connection")
+	}
+
+	// Parse URL to see if it's a URL format issue
+	if _, urlErr := url.Parse(client.BaseURL); urlErr != nil {
+		return fmt.Errorf("❌ Invalid server URL format: '%s'\n"+
+			"Please use a valid URL like: https://example.com or http://localhost:8080\n"+
+			"Use 'passenger server <correct-url>' to update the server URL", client.BaseURL)
+	}
+
+	// Check if the error is a network error
+	if netErr, ok := err.(net.Error); ok {
+		if netErr.Timeout() {
+			return fmt.Errorf("❌ Network timeout connecting to '%s'. Please try again", host)
+		}
+		return fmt.Errorf("❌ Network error connecting to '%s': %s", host, netErr.Error())
+	}
+
+	// Default network error message
+	return fmt.Errorf("❌ Failed to connect to server at '%s': %s\n"+
+		"Use 'passenger server <correct-url>' to update the server URL if needed", host, err.Error())
+}
+
+// formatHTTPError provides user-friendly error messages for HTTP status codes
+func (client *Client) formatHTTPError(statusCode int, path string) error {
+	switch statusCode {
+	case 400:
+		return fmt.Errorf("❌ Bad request to '%s'. Please check your input parameters", path)
+	case 401:
+		return fmt.Errorf("❌ Authentication required. Please login first with 'passenger login'")
+	case 403:
+		return fmt.Errorf("❌ Access denied. You don't have permission to access '%s'", path)
+	case 404:
+		return fmt.Errorf("❌ Endpoint '%s' not found. Please check:\n"+
+			"  • The server URL is correct\n"+
+			"  • You're using a compatible Passenger Go server\n"+
+			"  • The API endpoint exists on this server", path)
+	case 405:
+		return fmt.Errorf("❌ Method not allowed for '%s'", path)
+	case 409:
+		return fmt.Errorf("❌ Conflict: The request could not be completed due to a conflict")
+	case 422:
+		return fmt.Errorf("❌ Invalid data provided. Please check your input")
+	case 429:
+		return fmt.Errorf("❌ Too many requests. Please wait before trying again")
+	case 500:
+		return fmt.Errorf("❌ Server error. The Passenger Go server encountered an internal error")
+	case 502:
+		return fmt.Errorf("❌ Bad gateway. The server is temporarily unavailable")
+	case 503:
+		return fmt.Errorf("❌ Service unavailable. The server is temporarily down for maintenance")
+	case 504:
+		return fmt.Errorf("❌ Gateway timeout. The server took too long to respond")
+	default:
+		if statusCode >= 400 && statusCode < 500 {
+			return fmt.Errorf("❌ Client error (HTTP %d) accessing '%s'", statusCode, path)
+		} else if statusCode >= 500 {
+			return fmt.Errorf("❌ Server error (HTTP %d). Please try again later", statusCode)
+		}
+		return fmt.Errorf("❌ Unexpected HTTP status %d for '%s'", statusCode, path)
+	}
 }
 
 // Get performs a GET request
