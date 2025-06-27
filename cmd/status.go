@@ -13,7 +13,7 @@ func StatusCommand() *cli.Command {
 		Aliases: []string{"check", "is-initialized"},
 		Usage:   "Check if the Passenger Go initialized.",
 		Action: func(context *cli.Context) error {
-			status, err := api.GetStatus()
+			status, err := api.Status()
 			if err != nil {
 				return cli.Exit(err.Error(), 1)
 			}

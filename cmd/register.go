@@ -31,7 +31,7 @@ func RegisterCommand() *cli.Command {
 			}
 
 			// Check if system is already initialized
-			status, err := api.GetStatus()
+			status, err := api.Status()
 			if err != nil {
 				return cli.Exit(fmt.Sprintf("❌ Failed to check initialization status: %s", err.Error()), 1)
 			}
