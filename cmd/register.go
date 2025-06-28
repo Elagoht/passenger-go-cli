@@ -16,33 +16,23 @@ func RegisterCommand() *cli.Command {
 		Aliases: []string{"init", "initialize"},
 		Usage:   "Initialize the passenger if not already initialized.",
 		Action: func(context *cli.Context) error {
+			// 1. Take passphrase from user
 			fmt.Print("Enter passphrase: ")
-
-			// Read password from stdin without echoing
 			bytePassword, err := term.ReadPassword(int(syscall.Stdin))
 			if err != nil {
 				return cli.Exit("❌ Failed to read passphrase: "+err.Error(), 1)
 			}
-			fmt.Println() // Print newline after password input
-
+			fmt.Println()
 			passphrase := string(bytePassword)
 			if passphrase == "" {
 				return cli.Exit("❌ Passphrase is required", 1)
 			}
-
-			// Check if system is already initialized
-			status, err := api.Status()
-			if err != nil {
-				return cli.Exit(fmt.Sprintf("❌ Failed to check initialization status: %s", err.Error()), 1)
-			}
-			if status {
-				return cli.Exit("❌ System is already initialized. Use 'passenger login' instead.", 1)
-			}
-
+			// 2. Ask API to register the system
 			recovery, err := api.Register(passphrase)
 			if err != nil {
-				return cli.Exit(fmt.Sprintf("❌ Registration failed: %s", err.Error()), 1)
+				return err
 			}
+			// 3. Print recovery key to stdin and the description to stderr
 			fmt.Fprintf(os.Stderr, "🚨 Register flow requires you to securely store a recovery key. This key will be required if forget your master passphrase.\n This text printed to stderr, you can redirect stdout to a file to save the recovery key.\n\n")
 			fmt.Println(recovery)
 			return nil
