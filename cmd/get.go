@@ -1,8 +1,8 @@
 package cmd
 
 import (
-	"os"
 	"passenger-go-cli/internal/api"
+	"passenger-go-cli/internal/utilities"
 	"strconv"
 
 	"github.com/urfave/cli/v2"
@@ -19,12 +19,14 @@ func GetCommand() *cli.Command {
 				return err
 			}
 
-			os.Stdout.WriteString(account.ID + "\n")
-			os.Stdout.WriteString(account.Platform + "\n")
-			os.Stdout.WriteString(account.Identifier + "\n")
-			os.Stdout.WriteString(account.URL + "\n")
-			os.Stdout.WriteString(account.Notes + "\n")
-			os.Stdout.WriteString(strconv.Itoa(account.Strength) + "\n")
+			utilities.PrintTable([][]string{
+				{"ID", account.ID},
+				{"Platform", account.Platform},
+				{"Identifier", account.Identifier},
+				{"URL", account.URL},
+				{"Notes", account.Notes},
+				{"Strength", strconv.Itoa(account.Strength)},
+			}, nil)
 
 			return nil
 		},

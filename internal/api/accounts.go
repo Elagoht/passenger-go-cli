@@ -1,7 +1,6 @@
 package api
 
 import (
-	"fmt"
 	"passenger-go-cli/internal/schemas"
 )
 
@@ -21,8 +20,6 @@ func GetAccount(accountID string) (*schemas.Account, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	fmt.Println(rawResponse)
 
 	return rawResponse, nil
 }

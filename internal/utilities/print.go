@@ -35,6 +35,77 @@ func PrintTable[T any](data []T, headers []string) {
 
 	termWidth := getTerminalWidth()
 
+	// Handle nil headers - skip header printing but still calculate widths
+	if headers == nil {
+		// Calculate max widths from data only
+		maxWidths := make([]int, 0)
+
+		// Find the maximum number of columns from all data rows
+		maxColumns := 0
+		for _, row := range data {
+			rowData := any(row).([]string)
+			if len(rowData) > maxColumns {
+				maxColumns = len(rowData)
+			}
+		}
+
+		// Initialize maxWidths with zeros
+		maxWidths = make([]int, maxColumns)
+
+		// Check data rows for maximum width
+		for _, row := range data {
+			rowData := any(row).([]string)
+			for cellIndex, cell := range rowData {
+				if cellIndex < len(maxWidths) && len(cell) > maxWidths[cellIndex] {
+					maxWidths[cellIndex] = len(cell)
+				}
+			}
+		}
+
+		// Calculate total width needed including separators
+		totalWidth := 0
+		for index, width := range maxWidths {
+			totalWidth += width
+			if index < len(maxWidths)-1 {
+				totalWidth += 3 // for " | "
+			}
+		}
+
+		// If table is too wide, proportionally reduce column widths
+		if totalWidth > termWidth {
+			// Reserve space for separators
+			availableWidth := termWidth - (len(maxWidths)-1)*3
+
+			// Set maximum column widths based on available space
+			for index := range maxWidths {
+				maxColumnWidth := max(
+					availableWidth/len(maxWidths),
+					8,
+				)
+
+				if maxWidths[index] > maxColumnWidth {
+					maxWidths[index] = maxColumnWidth
+				}
+			}
+		}
+
+		// Print data rows only (no headers, no separator)
+		for _, row := range data {
+			rowData := any(row).([]string)
+			for index, cell := range rowData {
+				if index < len(maxWidths) {
+					truncatedCell := truncateString(cell, maxWidths[index])
+					fmt.Printf("%-*s", maxWidths[index], truncatedCell)
+					if index < len(maxWidths)-1 {
+						fmt.Print(" | ")
+					}
+				}
+			}
+			fmt.Println()
+		}
+		return
+	}
+
 	// Calculate initial max widths
 	maxWidths := make([]int, len(headers))
 	for index, header := range headers {
