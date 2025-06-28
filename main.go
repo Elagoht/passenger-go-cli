@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"passenger-go-cli/cmd"
 
@@ -9,18 +10,21 @@ import (
 
 func main() {
 	app := &cli.App{
-		Name: "passenger",
+		Name: "passenger-go",
 		Commands: []*cli.Command{
 			cmd.ServerCommand(),
 			cmd.StatusCommand(),
 			cmd.LoginCommand(),
+			cmd.LogoutCommand(),
 			cmd.RegisterCommand(),
+			cmd.ListCommand(),
 		},
 		EnableBashCompletion: true,
 	}
 
 	err := app.Run(os.Args)
 	if err != nil {
-		cli.Exit(err.Error(), 1)
+		fmt.Println(err.Error())
+		os.Exit(1)
 	}
 }
