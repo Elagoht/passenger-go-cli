@@ -35,10 +35,16 @@ func GetAccountPassphrase(accountID string) (string, error) {
 	return string(*response), nil
 }
 
-func CreateAccount(account schemas.Account) (*schemas.Account, error) {
+func CreateAccount(account schemas.CreateAccountRequest) (*schemas.Account, error) {
 	response, _, err := Post[schemas.CreateAccountResponse](
 		"/accounts",
-		account,
+		map[string]string{
+			"platform":   account.Platform,
+			"identifier": account.Identifier,
+			"passphrase": account.Passphrase,
+			"url":        account.URL,
+			"notes":      account.Notes,
+		},
 	)
 	if err != nil {
 		return nil, err
