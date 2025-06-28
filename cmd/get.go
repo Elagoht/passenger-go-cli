@@ -13,16 +13,8 @@ func GetCommand() *cli.Command {
 		Name:    "get",
 		Aliases: []string{"fetch", "show"},
 		Usage:   "Will get the account details by id",
-		Flags: []cli.Flag{
-			&cli.StringFlag{
-				Name:     "id",
-				Aliases:  []string{"i"},
-				Usage:    "The id of the account to get",
-				Required: true,
-			},
-		},
 		Action: func(c *cli.Context) error {
-			account, err := api.GetAccount(c.String("id"))
+			account, err := api.GetAccount(c.Args().First())
 			if err != nil {
 				return err
 			}

@@ -17,9 +17,11 @@ func main() {
 			cmd.LoginCommand(),
 			cmd.LogoutCommand(),
 			cmd.RegisterCommand(),
+			cmd.ValidateCommand(),
 			cmd.ListCommand(),
 			cmd.GetCommand(),
 			cmd.PassphraseCommand(),
+			cmd.ChangeMasterPassphraseCommand(),
 		},
 		EnableBashCompletion: true,
 	}

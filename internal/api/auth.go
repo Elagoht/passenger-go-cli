@@ -48,6 +48,19 @@ func ValidateRecovery(recoveryKey string) error {
 		"recovery": recoveryKey,
 	}
 
-	_, _, err := Post[any]("/api/validate", request)
+	_, _, err := Post[any]("/auth/validate", request)
 	return err
+}
+
+func ChangeMasterPassphrase(passphrase string) error {
+	request := map[string]string{
+		"passphrase": passphrase,
+	}
+
+	_, _, err := Post[any]("/auth/passphrase", request)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

@@ -10,7 +10,7 @@ import (
 func StatusCommand() *cli.Command {
 	return &cli.Command{
 		Name:    "status",
-		Aliases: []string{"check", "is-initialized"},
+		Aliases: []string{"is-initialized"},
 		Usage:   "Check if the Passenger Go initialized.",
 		Action: func(context *cli.Context) error {
 			status, err := api.Status()
@@ -20,7 +20,7 @@ func StatusCommand() *cli.Command {
 			if status {
 				fmt.Println("✅ Passenger Go is initialized")
 			} else {
-				fmt.Println("❌ Passenger Go is not initialized")
+				fmt.Println("Passenger Go is not initialized")
 			}
 			return nil
 		},

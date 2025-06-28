@@ -20,12 +20,12 @@ func RegisterCommand() *cli.Command {
 			fmt.Print("Enter passphrase: ")
 			bytePassword, err := term.ReadPassword(int(syscall.Stdin))
 			if err != nil {
-				return cli.Exit("❌ Failed to read passphrase: "+err.Error(), 1)
+				return cli.Exit("Failed to read passphrase: "+err.Error(), 1)
 			}
 			fmt.Println()
 			passphrase := string(bytePassword)
 			if passphrase == "" {
-				return cli.Exit("❌ Passphrase is required", 1)
+				return cli.Exit("Passphrase is required", 1)
 			}
 			// 2. Ask API to register the system
 			recovery, err := api.Register(passphrase)

@@ -4,10 +4,9 @@ import (
 	"fmt"
 	"passenger-go-cli/internal/api"
 	"passenger-go-cli/internal/auth"
-	"syscall"
+	"passenger-go-cli/internal/utilities"
 
 	"github.com/urfave/cli/v2"
-	"golang.org/x/term"
 )
 
 func LoginCommand() *cli.Command {
@@ -16,23 +15,14 @@ func LoginCommand() *cli.Command {
 		Aliases: []string{"sign-in", "log-in"},
 		Usage:   "Login to the passenger.",
 		Action: func(c *cli.Context) error {
-			fmt.Print("Enter passphrase: ")
-
-			// Read password from stdin without echoing
-			bytePassword, err := term.ReadPassword(int(syscall.Stdin))
+			passphrase, err := utilities.ReadValue("Passphrase: ", true, true)
 			if err != nil {
-				return cli.Exit("❌ Failed to read passphrase: "+err.Error(), 1)
-			}
-			fmt.Println() // Print newline after password input
-
-			passphrase := string(bytePassword)
-			if passphrase == "" {
-				return cli.Exit("❌ Passphrase is required", 1)
+				return cli.Exit("Failed to read passphrase: "+err.Error(), 1)
 			}
 
 			token, err := api.Login(passphrase)
 			if err != nil {
-				return cli.Exit("❌ Could not login: "+err.Error(), 1)
+				return cli.Exit("Could not login: "+err.Error(), 1)
 			}
 
 			err = auth.StoreToken(token)

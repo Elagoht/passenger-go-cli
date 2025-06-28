@@ -15,7 +15,7 @@ func LogoutCommand() *cli.Command {
 		Action: func(c *cli.Context) error {
 			err := auth.ClearToken()
 			if err != nil {
-				return cli.Exit(fmt.Sprintf("❌ Failed to clear token: %v", err), 1)
+				return cli.Exit(fmt.Sprintf("Failed to clear token: %v", err), 1)
 			}
 
 			fmt.Println("✅ Successfully logged out! Token has been cleared.")
