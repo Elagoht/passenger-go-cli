@@ -23,6 +23,7 @@ func main() {
 			cmd.ChangeMasterPassphraseCommand(),
 			cmd.GenerateCommand(),
 			cmd.AlternateCommand(),
+			cmd.CreateCommand(),
 		},
 		EnableBashCompletion: true,
 	}

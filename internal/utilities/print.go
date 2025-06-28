@@ -37,71 +37,107 @@ func PrintTable[T any](data []T, headers []string) {
 
 	// Handle nil headers - skip header printing but still calculate widths
 	if headers == nil {
-		// Calculate max widths from data only
-		maxWidths := make([]int, 0)
-
-		// Find the maximum number of columns from all data rows
+		// Check if this is a key-value format (2 columns, first column is shorter)
+		isKeyValue := true
 		maxColumns := 0
+		keyColumnMaxWidth := 0
+
+		// Find the maximum number of columns and check if it's key-value format
 		for _, row := range data {
 			rowData := any(row).([]string)
 			if len(rowData) > maxColumns {
 				maxColumns = len(rowData)
 			}
-		}
-
-		// Initialize maxWidths with zeros
-		maxWidths = make([]int, maxColumns)
-
-		// Check data rows for maximum width
-		for _, row := range data {
-			rowData := any(row).([]string)
-			for cellIndex, cell := range rowData {
-				if cellIndex < len(maxWidths) && len(cell) > maxWidths[cellIndex] {
-					maxWidths[cellIndex] = len(cell)
+			if len(rowData) >= 2 {
+				keyLength := len(rowData[0])
+				if keyLength > keyColumnMaxWidth {
+					keyColumnMaxWidth = keyLength
 				}
 			}
 		}
 
-		// Calculate total width needed including separators
-		totalWidth := 0
-		for index, width := range maxWidths {
-			totalWidth += width
-			if index < len(maxWidths)-1 {
-				totalWidth += 3 // for " | "
-			}
+		// If not exactly 2 columns, treat as regular table
+		if maxColumns != 2 {
+			isKeyValue = false
 		}
 
-		// If table is too wide, proportionally reduce column widths
-		if totalWidth > termWidth {
-			// Reserve space for separators
-			availableWidth := termWidth - (len(maxWidths)-1)*3
+		if isKeyValue {
+			// Key-value format: first column fixed width, second column takes remaining space
+			keyWidth := keyColumnMaxWidth
+			valueWidth := termWidth - keyWidth - 3 // 3 for " | "
 
-			// Set maximum column widths based on available space
-			for index := range maxWidths {
-				maxColumnWidth := max(
-					availableWidth/len(maxWidths),
-					8,
-				)
+			// Ensure minimum widths
+			if keyWidth < 8 {
+				keyWidth = 8
+			}
+			if valueWidth < 8 {
+				valueWidth = 8
+			}
 
-				if maxWidths[index] > maxColumnWidth {
-					maxWidths[index] = maxColumnWidth
+			// Print key-value pairs
+			for _, row := range data {
+				rowData := any(row).([]string)
+				if len(rowData) >= 2 {
+					truncatedKey := truncateString(rowData[0], keyWidth)
+					truncatedValue := truncateString(rowData[1], valueWidth)
+					fmt.Printf("%-*s | %s\n", keyWidth, truncatedKey, truncatedValue)
 				}
 			}
-		}
+		} else {
+			// Regular table format - calculate max widths for all columns
+			maxWidths := make([]int, maxColumns)
 
-		// Print data rows only (no headers, no separator)
-		for _, row := range data {
-			rowData := any(row).([]string)
-			for index, cell := range rowData {
-				if index < len(maxWidths) {
-					truncatedCell := truncateString(cell, maxWidths[index])
-					fmt.Printf("%-*s", maxWidths[index], truncatedCell)
-					if index < len(maxWidths)-1 {
-						fmt.Print(" | ")
+			// Check data rows for maximum width
+			for _, row := range data {
+				rowData := any(row).([]string)
+				for cellIndex, cell := range rowData {
+					if cellIndex < len(maxWidths) && len(cell) > maxWidths[cellIndex] {
+						maxWidths[cellIndex] = len(cell)
 					}
 				}
 			}
-			fmt.Println()
+
+			// Calculate total width needed including separators
+			totalWidth := 0
+			for index, width := range maxWidths {
+				totalWidth += width
+				if index < len(maxWidths)-1 {
+					totalWidth += 3 // for " | "
+				}
+			}
+
+			// If table is too wide, proportionally reduce column widths
+			if totalWidth > termWidth {
+				// Reserve space for separators
+				availableWidth := termWidth - (len(maxWidths)-1)*3
+
+				// Set maximum column widths based on available space
+				for index := range maxWidths {
+					maxColumnWidth := max(
+						availableWidth/len(maxWidths),
+						8,
+					)
+
+					if maxWidths[index] > maxColumnWidth {
+						maxWidths[index] = maxColumnWidth
+					}
+				}
+			}
+
+			// Print data rows
+			for _, row := range data {
+				rowData := any(row).([]string)
+				for index, cell := range rowData {
+					if index < len(maxWidths) {
+						truncatedCell := truncateString(cell, maxWidths[index])
+						fmt.Printf("%-*s", maxWidths[index], truncatedCell)
+						if index < len(maxWidths)-1 {
+							fmt.Print(" | ")
+						}
+					}
+				}
+				fmt.Println()
+			}
 		}
 		return
 	}
