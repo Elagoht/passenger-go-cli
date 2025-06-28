@@ -3,10 +3,9 @@ package cmd
 import (
 	"fmt"
 	"passenger-go-cli/internal/api"
-	"syscall"
+	"passenger-go-cli/internal/utilities"
 
 	"github.com/urfave/cli/v2"
-	"golang.org/x/term"
 )
 
 func ChangeMasterPassphraseCommand() *cli.Command {
@@ -15,16 +14,10 @@ func ChangeMasterPassphraseCommand() *cli.Command {
 		Aliases: []string{"change-passphrase", "change-master", "change-master-pass"},
 		Usage:   "Will change the master passphrase.",
 		Action: func(c *cli.Context) error {
-			// 1. Take passphrase from user
-			fmt.Print("Enter new master passphrase: ")
-			bytePassword, err := term.ReadPassword(int(syscall.Stdin))
+			// 1. Take new passphrase from user
+			passphrase, err := utilities.ReadValue("New passphrase: ", true, true)
 			if err != nil {
 				return cli.Exit("Failed to read passphrase: "+err.Error(), 1)
-			}
-			fmt.Println()
-			passphrase := string(bytePassword)
-			if passphrase == "" {
-				return cli.Exit("Passphrase is required", 1)
 			}
 
 			// 2. Ask API to change the master passphrase
@@ -32,7 +25,7 @@ func ChangeMasterPassphraseCommand() *cli.Command {
 			if err != nil {
 				return err
 			}
-			fmt.Println("Master passphrase changed")
+			fmt.Println("✅ Master passphrase changed")
 			return nil
 		},
 	}

@@ -1,6 +1,8 @@
 package api
 
-import "passenger-go-cli/internal/schemas"
+import (
+	"passenger-go-cli/internal/schemas"
+)
 
 func Login(passphrase string) (string, error) {
 	loginRequest := map[string]string{
@@ -57,7 +59,7 @@ func ChangeMasterPassphrase(passphrase string) error {
 		"passphrase": passphrase,
 	}
 
-	_, _, err := Post[any]("/auth/passphrase", request)
+	_, _, err := Patch[any]("/auth/passphrase", request)
 	if err != nil {
 		return err
 	}

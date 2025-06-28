@@ -98,6 +98,7 @@ func DoRequest[T any](endpoint string, config RequestConfig) (*T, []byte, error)
 
 	// Check for HTTP errors
 	if resp.StatusCode >= 400 {
+		fmt.Printf("Response: %s\n", string(body))
 		var errorResponse schemas.ResponseError
 		if err := json.Unmarshal(body, &errorResponse); err != nil {
 			// If we can't parse the error response as JSON, use the raw response
@@ -106,9 +107,19 @@ func DoRequest[T any](endpoint string, config RequestConfig) (*T, []byte, error)
 		return nil, body, fmt.Errorf("%s", errorResponse.Message)
 	}
 
+	// Handle 204 No Content responses
+	if resp.StatusCode == 204 {
+		return nil, body, nil
+	}
+
 	// Handle response based on content type
 	contentType := resp.Header.Get("Content-Type")
 	if strings.Contains(contentType, "application/json") {
+		// Handle empty JSON response bodies
+		if len(body) == 0 || string(body) == "" {
+			return nil, body, nil
+		}
+
 		// Parse JSON response
 		var result T
 		if err := json.Unmarshal(body, &result); err != nil {
@@ -241,6 +252,14 @@ func PostFile[T any](
 		FilePath:  filePath,
 		FileField: fileField,
 		Body:      formData,
+	})
+}
+
+func Patch[T any](endpoint string, body any) (*T, []byte, error) {
+	return DoRequest[T](endpoint, RequestConfig{
+		Method:   "PATCH",
+		Endpoint: endpoint,
+		Body:     body,
 	})
 }
 
