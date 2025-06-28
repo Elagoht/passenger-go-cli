@@ -98,7 +98,6 @@ func DoRequest[T any](endpoint string, config RequestConfig) (*T, []byte, error)
 
 	// Check for HTTP errors
 	if resp.StatusCode >= 400 {
-		fmt.Printf("Response: %s\n", string(body))
 		var errorResponse schemas.ResponseError
 		if err := json.Unmarshal(body, &errorResponse); err != nil {
 			// If we can't parse the error response as JSON, use the raw response
