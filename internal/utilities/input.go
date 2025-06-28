@@ -10,7 +10,7 @@ import (
 )
 
 func ReadValue(value string, echo bool, required bool) (string, error) {
-	fmt.Print(value)
+	os.Stdout.WriteString(value)
 
 	var byteValue []byte
 	var err error
@@ -24,7 +24,7 @@ func ReadValue(value string, echo bool, required bool) (string, error) {
 		return "", err
 	}
 
-	fmt.Println()
+	os.Stdout.WriteString("\n")
 
 	if required && string(byteValue) == "" {
 		return "", fmt.Errorf("%s is required", value)

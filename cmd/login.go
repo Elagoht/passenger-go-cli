@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"os"
 	"passenger-go-cli/internal/api"
 	"passenger-go-cli/internal/auth"
 	"passenger-go-cli/internal/utilities"
@@ -30,7 +31,7 @@ func LoginCommand() *cli.Command {
 				return cli.Exit(fmt.Sprintf("Failed to store token: %v", err), 1)
 			}
 
-			fmt.Println("✅ Successfully logged in! Token will expire in 5 minutes.")
+			os.Stdout.WriteString("✅ Successfully logged in! Token will expire in 5 minutes.")
 			return nil
 		},
 	}
