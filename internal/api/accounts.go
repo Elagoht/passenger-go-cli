@@ -1,6 +1,9 @@
 package api
 
-import "passenger-go-cli/internal/schemas"
+import (
+	"fmt"
+	"passenger-go-cli/internal/schemas"
+)
 
 func GetAccounts() ([]schemas.Account, error) {
 	response, _, err := Get[schemas.AccountsListResponse]("/accounts")
@@ -11,8 +14,21 @@ func GetAccounts() ([]schemas.Account, error) {
 	return *response, nil
 }
 
+func GetAccount(accountID string) (*schemas.Account, error) {
+	endpoint := "/accounts/" + accountID
+
+	rawResponse, _, err := Get[schemas.Account](endpoint)
+	if err != nil {
+		return nil, err
+	}
+
+	fmt.Println(rawResponse)
+
+	return rawResponse, nil
+}
+
 func GetAccountPassphrase(accountID string) (string, error) {
-	endpoint := "/api/accounts/" + accountID + "/passphrase"
+	endpoint := "/accounts/" + accountID + "/passphrase"
 
 	response, _, err := Get[schemas.AccountPassphraseResponse](endpoint)
 	if err != nil {
@@ -24,7 +40,7 @@ func GetAccountPassphrase(accountID string) (string, error) {
 
 func CreateAccount(account schemas.Account) (*schemas.Account, error) {
 	response, _, err := Post[schemas.CreateAccountResponse](
-		"/api/accounts",
+		"/accounts",
 		account,
 	)
 	if err != nil {
@@ -39,7 +55,7 @@ func UpdateAccount(
 	accountID string,
 	account schemas.Account,
 ) (*schemas.Account, error) {
-	endpoint := "/api/accounts/" + accountID
+	endpoint := "/accounts/" + accountID
 
 	response, _, err := Put[schemas.Account](endpoint, account)
 	if err != nil {
@@ -50,7 +66,7 @@ func UpdateAccount(
 }
 
 func DeleteAccount(accountID string) error {
-	endpoint := "/api/accounts/" + accountID
+	endpoint := "/accounts/" + accountID
 
 	_, _, err := Delete[any](endpoint)
 	return err

@@ -18,6 +18,8 @@ func main() {
 			cmd.LogoutCommand(),
 			cmd.RegisterCommand(),
 			cmd.ListCommand(),
+			cmd.GetCommand(),
+			cmd.PassphraseCommand(),
 		},
 		EnableBashCompletion: true,
 	}
