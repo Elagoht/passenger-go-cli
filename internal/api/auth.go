@@ -1,17 +1,25 @@
 package api
 
-import (
-	"passenger-go-cli/internal/schemas"
-)
+import "passenger-go-cli/internal/schemas"
 
-func Status() (bool, error) {
-	client, err := NewClient()
-	if err != nil {
-		return false, err
+func Login(passphrase string) (string, error) {
+	loginRequest := map[string]string{
+		"passphrase": passphrase,
 	}
 
-	var response schemas.ResponseStatus
-	err = client.Get("/api/auth/status", &response)
+	response, _, err := Post[schemas.ResponseLogin](
+		"/auth/login",
+		loginRequest,
+	)
+	if err != nil {
+		return "", err
+	}
+
+	return response.Token, nil
+}
+
+func Status() (bool, error) {
+	response, _, err := Get[schemas.ResponseStatus]("/auth/status")
 	if err != nil {
 		return false, err
 	}
@@ -20,15 +28,14 @@ func Status() (bool, error) {
 }
 
 func Register(passphrase string) (string, error) {
-	client, err := NewClient()
-	if err != nil {
-		return "", err
+	registerRequest := map[string]string{
+		"passphrase": passphrase,
 	}
 
-	var response schemas.ResponseRegister
-	err = client.Post("/api/auth/register", map[string]string{
-		"passphrase": passphrase,
-	}, &response)
+	response, _, err := Post[schemas.ResponseRegister](
+		"/auth/register",
+		registerRequest,
+	)
 	if err != nil {
 		return "", err
 	}
@@ -36,19 +43,11 @@ func Register(passphrase string) (string, error) {
 	return response.Recovery, nil
 }
 
-func Login(passphrase string) (string, error) {
-	client, err := NewClient()
-	if err != nil {
-		return "", err
+func ValidateRecovery(recoveryKey string) error {
+	request := map[string]string{
+		"recovery": recoveryKey,
 	}
 
-	var response schemas.ResponseLogin
-	err = client.Post("/api/auth/login", map[string]string{
-		"passphrase": passphrase,
-	}, &response)
-	if err != nil {
-		return "", err
-	}
-
-	return response.Token, nil
+	_, _, err := Post[any]("/api/validate", request)
+	return err
 }
