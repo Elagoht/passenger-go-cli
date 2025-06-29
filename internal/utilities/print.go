@@ -27,10 +27,19 @@ func getTerminalWidth() int {
 }
 
 // calculate the max width of each column and print the table
-func PrintTable[T any](data []T, headers []string) {
+func PrintTable[T any](data []T, headers []string, useStderr ...bool) {
 	if len(data) == 0 {
-		fmt.Println("No data to display")
+		output := os.Stdout
+		if len(useStderr) > 0 && useStderr[0] {
+			output = os.Stderr
+		}
+		fmt.Fprintln(output, "No data to display, use `passenger-go create` or `passenger-go import --file=<file>` to add data.")
 		return
+	}
+
+	output := os.Stdout
+	if len(useStderr) > 0 && useStderr[0] {
+		output = os.Stderr
 	}
 
 	termWidth := getTerminalWidth()
@@ -80,7 +89,7 @@ func PrintTable[T any](data []T, headers []string) {
 				if len(rowData) >= 2 {
 					truncatedKey := truncateString(rowData[0], keyWidth)
 					truncatedValue := truncateString(rowData[1], valueWidth)
-					fmt.Printf("%-*s | %s\n", keyWidth, truncatedKey, truncatedValue)
+					fmt.Fprintf(output, "%-*s | %s\n", keyWidth, truncatedKey, truncatedValue)
 				}
 			}
 		} else {
@@ -130,13 +139,13 @@ func PrintTable[T any](data []T, headers []string) {
 				for index, cell := range rowData {
 					if index < len(maxWidths) {
 						truncatedCell := truncateString(cell, maxWidths[index])
-						fmt.Printf("%-*s", maxWidths[index], truncatedCell)
+						fmt.Fprintf(output, "%-*s", maxWidths[index], truncatedCell)
 						if index < len(maxWidths)-1 {
-							fmt.Print(" | ")
+							fmt.Fprint(output, " | ")
 						}
 					}
 				}
-				fmt.Println()
+				fmt.Fprintln(output)
 			}
 		}
 		return
@@ -188,12 +197,12 @@ func PrintTable[T any](data []T, headers []string) {
 	// Print headers with proper padding
 	for index, header := range headers {
 		truncatedHeader := truncateString(header, maxWidths[index])
-		fmt.Printf("%-*s", maxWidths[index], truncatedHeader)
+		fmt.Fprintf(output, "%-*s", maxWidths[index], truncatedHeader)
 		if index < len(headers)-1 {
-			fmt.Print(" | ")
+			fmt.Fprint(output, " | ")
 		}
 	}
-	fmt.Println()
+	fmt.Fprintln(output)
 
 	// Print separator line
 	totalActualWidth := 0
@@ -203,7 +212,7 @@ func PrintTable[T any](data []T, headers []string) {
 			totalActualWidth += 3 // for " | "
 		}
 	}
-	fmt.Println(strings.Repeat("-", totalActualWidth))
+	fmt.Fprintln(output, strings.Repeat("-", totalActualWidth))
 
 	// Print data rows
 	for _, row := range data {
@@ -211,12 +220,12 @@ func PrintTable[T any](data []T, headers []string) {
 		for index, cell := range rowData {
 			if index < len(maxWidths) {
 				truncatedCell := truncateString(cell, maxWidths[index])
-				fmt.Printf("%-*s", maxWidths[index], truncatedCell)
+				fmt.Fprintf(output, "%-*s", maxWidths[index], truncatedCell)
 				if index < len(headers)-1 {
-					fmt.Print(" | ")
+					fmt.Fprint(output, " | ")
 				}
 			}
 		}
-		fmt.Println()
+		fmt.Fprintln(output)
 	}
 }

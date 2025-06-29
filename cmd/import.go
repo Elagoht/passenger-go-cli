@@ -3,6 +3,7 @@ package cmd
 import (
 	"os"
 	"passenger-go-cli/internal/api"
+	"passenger-go-cli/internal/utilities"
 	"strconv"
 
 	"github.com/urfave/cli/v2"
@@ -22,8 +23,8 @@ func ImportCommand() *cli.Command {
 				TakesFile: true,
 			},
 		},
-		Action: func(c *cli.Context) error {
-			filePath := c.String("file")
+		Action: func(context *cli.Context) error {
+			filePath := context.String("file")
 
 			if _, err := os.Stat(filePath); os.IsNotExist(err) {
 				return cli.Exit("File not found: "+filePath, 1)
@@ -34,25 +35,24 @@ func ImportCommand() *cli.Command {
 				return err
 			}
 
-			if response.Imported > 0 {
+			if response.SuccessCount > 0 {
 				os.Stdout.WriteString(
-					"✅ Imported " + strconv.Itoa(response.Imported) +
+					"✅ Imported " + strconv.Itoa(response.SuccessCount) +
 						" accounts from " + filePath + "\n",
 				)
 			}
 
-			if response.Skipped > 0 {
+			if len(response.FailedOnes) > 0 {
 				os.Stdout.WriteString(
-					"❌ Skipped " + strconv.Itoa(response.Skipped) +
+					"❌ Skipped " + strconv.Itoa(len(response.FailedOnes)) +
 						" accounts from " + filePath + "\n" +
 						"Unimportable accounts (might be already exist) printed to stderr.\n",
 				)
-			}
-
-			if len(response.Errors) > 0 {
-				for _, unimportedAccount := range response.Errors {
-					os.Stderr.WriteString(unimportedAccount + "\n")
+				var failedTable [][]string
+				for _, account := range response.FailedOnes {
+					failedTable = append(failedTable, []string{account.Platform, account.Identifier, account.URL})
 				}
+				utilities.PrintTable(failedTable, []string{"Platform", "Identifier", "URL"}, true)
 			}
 
 			return nil

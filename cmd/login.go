@@ -16,7 +16,24 @@ func LoginCommand() *cli.Command {
 		Aliases: []string{"sign-in", "log-in"},
 		Usage:   "Login to the passenger.",
 		Action: func(c *cli.Context) error {
-			passphrase, err := utilities.ReadValue("Passphrase: ", true, true)
+			// Check if the server is initialized first
+			status, err := api.Status()
+			if err != nil {
+				return cli.Exit("Failed to check server status: "+err.Error(), 1)
+			}
+
+			if !status {
+				return cli.Exit(`❌ Cannot login: Passenger Go server is not initialized.
+
+To initialize the server:
+1. Run 'passenger-go register' to set up the master passphrase
+2. Run 'passenger-go validate' to verify your recovery key
+3. Then run 'passenger-go login' to sign in
+
+For more information, run 'passenger-go help register'`, 1)
+			}
+
+			passphrase, err := utilities.ReadValue("Passphrase", true, true)
 			if err != nil {
 				return cli.Exit("Failed to read passphrase: "+err.Error(), 1)
 			}

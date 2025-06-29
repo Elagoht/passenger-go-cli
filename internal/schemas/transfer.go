@@ -1,9 +1,14 @@
 package schemas
 
+type FailedOne struct {
+	Platform   string `json:"platform"`
+	Identifier string `json:"identifier"`
+	URL        string `json:"url"`
+}
+
 type ImportResponse struct {
-	Imported int      `json:"imported"`
-	Skipped  int      `json:"skipped"`
-	Errors   []string `json:"errors"`
+	SuccessCount int         `json:"successCount"`
+	FailedOnes   []FailedOne `json:"failedOnes"`
 }
 
 // * Note: Export endpoint returns CSV file, not JSON, so no response model needed

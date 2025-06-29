@@ -5,7 +5,7 @@ import (
 )
 
 func GetAccounts() ([]schemas.Account, error) {
-	response, _, err := Get[schemas.AccountsListResponse]("/accounts")
+	response, _, err := Get[[]schemas.Account]("/accounts")
 	if err != nil {
 		return nil, err
 	}

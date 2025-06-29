@@ -14,7 +14,7 @@ func AlternateCommand() *cli.Command {
 		Aliases: []string{"alt", "alternative", "manipulate", "shuffle"},
 		Usage:   "Alternate characters with similar looking characters.",
 		Action: func(context *cli.Context) error {
-			passphrase, err := utilities.ReadValue("Passphrase: ", true, true)
+			passphrase, err := utilities.ReadValue("Passphrase", true, true)
 			if err != nil {
 				return err
 			}

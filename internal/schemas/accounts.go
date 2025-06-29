@@ -9,8 +9,6 @@ type Account struct {
 	Strength   int    `json:"strength"`
 }
 
-type AccountsListResponse []Account
-
 type IdentifiersResponse []string
 
 type AccountPassphraseResponse string

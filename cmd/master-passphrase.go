@@ -15,7 +15,7 @@ func ChangeMasterPassphraseCommand() *cli.Command {
 		Usage:   "Will change the master passphrase.",
 		Action: func(c *cli.Context) error {
 			// 1. Take new passphrase from user
-			passphrase, err := utilities.ReadValue("New passphrase: ", true, true)
+			passphrase, err := utilities.ReadValue("New passphrase", true, true)
 			if err != nil {
 				return cli.Exit("Failed to read passphrase: "+err.Error(), 1)
 			}

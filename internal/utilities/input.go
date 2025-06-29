@@ -10,7 +10,7 @@ import (
 )
 
 func ReadValue(value string, echo bool, required bool) (string, error) {
-	os.Stdout.WriteString(value)
+	os.Stdout.WriteString(value + ": ")
 
 	var byteValue []byte
 	var err error
@@ -19,6 +19,7 @@ func ReadValue(value string, echo bool, required bool) (string, error) {
 		byteValue, err = term.ReadPassword(int(syscall.Stdin))
 	} else {
 		byteValue, err = bufio.NewReader(os.Stdin).ReadBytes('\n')
+		byteValue = byteValue[:len(byteValue)-1]
 	}
 	if err != nil {
 		return "", err
