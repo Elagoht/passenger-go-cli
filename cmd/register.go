@@ -25,9 +25,9 @@ func RegisterCommand() *cli.Command {
 				return err
 			}
 			// 3. Print recovery key to stdin and the description to stderr
-			os.Stdout.WriteString("🚨 Register flow requires you to securely store a recovery key. This key will be required if forget your master passphrase.\n This text printed to stdout, you can redirect stderr to a file to save the recovery key.\n")
-			os.Stderr.WriteString(recovery)
-			os.Stdout.WriteString("\n")
+			os.Stderr.WriteString("🚨 Register flow requires you to securely store a recovery key. This key will be required if forget your master passphrase.\n This text printed to stderr, you can redirect to a file to save the recovery key.\n")
+			os.Stdout.WriteString(recovery)
+			os.Stderr.WriteString("\nNext step is to validate the recovery key. Run `passenger-go validate` to validate the recovery key.\n")
 			return nil
 		},
 	}

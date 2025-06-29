@@ -1,8 +1,15 @@
 package api
 
-func ImportCSV(filePath string) error {
-	_, _, err := PostFile[any]("/transfer/import", filePath, "file", nil)
-	return err
+import (
+	"fmt"
+	"passenger-go-cli/internal/schemas"
+)
+
+func ImportCSV(filePath string) (*schemas.ImportResponse, error) {
+	response, byteeee, err := PostFile[schemas.ImportResponse]("/transfer/import", filePath, "file", nil)
+	fmt.Println(response)
+	fmt.Println(string(byteeee))
+	return response, err
 }
 
 func ExportCSV() ([]byte, error) {

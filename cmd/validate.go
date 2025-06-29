@@ -1,8 +1,9 @@
 package cmd
 
 import (
-	"fmt"
+	"os"
 	"passenger-go-cli/internal/api"
+	"passenger-go-cli/internal/utilities"
 
 	"github.com/urfave/cli/v2"
 )
@@ -13,12 +14,17 @@ func ValidateCommand() *cli.Command {
 		Aliases: []string{"verify"},
 		Usage:   "Validate the recovery key. Server needs to verify you have really backed up your recovery key.",
 		Action: func(c *cli.Context) error {
-			err := api.ValidateRecovery(c.Args().First())
+			recoveryKey, err := utilities.ReadValue("Recovery key", true, true)
 			if err != nil {
 				return err
 			}
 
-			fmt.Println("Recovery key validated")
+			err = api.ValidateRecovery(recoveryKey)
+			if err != nil {
+				return err
+			}
+
+			os.Stderr.WriteString("✅ Recovery key validated\n")
 			return nil
 		},
 	}
