@@ -12,7 +12,7 @@ func LogoutCommand() *cli.Command {
 		Name:    "logout",
 		Aliases: []string{"sign-out", "log-out"},
 		Usage:   "Logout from the passenger. Token is already a short lived one. But you can remove it sooner than that.",
-		Action: func(c *cli.Context) error {
+		Action: func(context *cli.Context) error {
 			err := auth.ClearToken()
 			if err != nil {
 				return cli.Exit(fmt.Sprintf("Failed to clear token: %v", err), 1)

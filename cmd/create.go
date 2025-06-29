@@ -14,7 +14,7 @@ func CreateCommand() *cli.Command {
 		Name:    "create",
 		Aliases: []string{"add", "new", "insert"},
 		Usage:   "Create a new account with interactive form",
-		Action: func(c *cli.Context) error {
+		Action: func(context *cli.Context) error {
 			form := utilities.NewInteractiveForm()
 
 			form.AddField("platform", "Platform", false, true)

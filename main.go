@@ -24,6 +24,7 @@ func main() {
 			cmd.GenerateCommand(),
 			cmd.AlternateCommand(),
 			cmd.CreateCommand(),
+			cmd.ExportCommand(),
 		},
 		EnableBashCompletion: true,
 	}
