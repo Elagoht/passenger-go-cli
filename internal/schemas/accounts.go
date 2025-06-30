@@ -15,7 +15,7 @@ type AccountPassphraseResponse string
 
 type CreateAccountResponse Account
 
-type CreateAccountRequest struct {
+type UpsertAccountRequest struct {
 	Platform   string `json:"platform"`
 	Identifier string `json:"identifier"`
 	URL        string `json:"url"`

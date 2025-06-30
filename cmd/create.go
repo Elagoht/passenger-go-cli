@@ -28,7 +28,7 @@ func CreateCommand() *cli.Command {
 				return cli.Exit("Failed to collect form data: "+err.Error(), 1)
 			}
 
-			account, err := api.CreateAccount(schemas.CreateAccountRequest{
+			account, err := api.CreateAccount(schemas.UpsertAccountRequest{
 				Platform:   form.GetValues()["platform"],
 				Identifier: form.GetValues()["identifier"],
 				URL:        form.GetValues()["url"],

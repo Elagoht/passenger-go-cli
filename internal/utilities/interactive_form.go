@@ -12,11 +12,12 @@ import (
 
 // FormField represents a single form field
 type FormField struct {
-	Key        string
-	Label      string
-	Value      string
-	IsPassword bool
-	IsRequired bool
+	Key          string
+	Label        string
+	Value        string
+	DefaultValue string
+	IsPassword   bool
+	IsRequired   bool
 }
 
 // InteractiveForm handles the interactive form input
@@ -37,11 +38,24 @@ func NewInteractiveForm() *InteractiveForm {
 // AddField adds a field to the form
 func (f *InteractiveForm) AddField(key, label string, isPassword, isRequired bool) {
 	f.fields = append(f.fields, &FormField{
-		Key:        key,
-		Label:      label,
-		Value:      "",
-		IsPassword: isPassword,
-		IsRequired: isRequired,
+		Key:          key,
+		Label:        label,
+		Value:        "",
+		DefaultValue: "",
+		IsPassword:   isPassword,
+		IsRequired:   isRequired,
+	})
+}
+
+// AddFieldWithDefault adds a field to the form with a default value
+func (f *InteractiveForm) AddFieldWithDefault(key, label, defaultValue string, isPassword, isRequired bool) {
+	f.fields = append(f.fields, &FormField{
+		Key:          key,
+		Label:        label,
+		Value:        defaultValue,
+		DefaultValue: defaultValue,
+		IsPassword:   isPassword,
+		IsRequired:   isRequired,
 	})
 }
 
@@ -111,8 +125,8 @@ func (f *InteractiveForm) displayForm() {
 	// Clear screen (simple approach)
 	fmt.Print("\033[H\033[2J")
 
-	fmt.Println("Interactive Form - Use arrow keys to navigate, Enter to confirm, Ctrl+C to quit")
-	fmt.Println("Guide: ↑/↓ Navigate | Enter Confirm | Ctrl+C Quit")
+	fmt.Println("Interactive Form - Use arrow keys to navigate, Enter to confirm, Ctrl+C to keep current value")
+	fmt.Println("Guide: ↑/↓ Navigate | Enter Confirm | Ctrl+C Keep Current Value")
 	fmt.Println()
 
 	for i, field := range f.fields {
@@ -121,12 +135,17 @@ func (f *InteractiveForm) displayForm() {
 			indicator = ">"
 		}
 
+		// Use Value if set, otherwise use DefaultValue for display
 		displayValue := field.Value
-		if field.IsPassword && field.Value != "" {
-			displayValue = strings.Repeat("*", len(field.Value))
+		if displayValue == "" {
+			displayValue = field.DefaultValue
 		}
 
-		if field.Value == "" {
+		if field.IsPassword && displayValue != "" {
+			displayValue = strings.Repeat("*", len(displayValue))
+		}
+
+		if displayValue == "" {
 			fmt.Printf("%s %s: \n", indicator, field.Label)
 		} else {
 			fmt.Printf("%s %s: %s\n", indicator, field.Label, displayValue)
@@ -202,7 +221,15 @@ func (f *InteractiveForm) validateCurrentField() bool {
 		term.Restore(int(os.Stdin.Fd()), f.originalState)
 	}
 
-	fmt.Printf("\nEnter %s: ", field.Label)
+	if field.DefaultValue != "" && !field.IsPassword {
+		fmt.Printf(
+			"\nEnter %s (current: %s, press Ctrl+C to keep): ",
+			field.Label,
+			field.DefaultValue,
+		)
+	} else {
+		fmt.Printf("\nEnter %s: ", field.Label)
+	}
 
 	var value string
 	var err error
@@ -214,11 +241,25 @@ func (f *InteractiveForm) validateCurrentField() bool {
 	}
 
 	if err != nil {
-		return false
+		// If there's an error (like Ctrl+C), keep the current value
+		// Ensure the field has a value by using DefaultValue if Value is empty
+		if field.Value == "" {
+			field.Value = field.DefaultValue
+		}
+		return true
 	}
 
 	// Trim whitespace
 	value = strings.TrimSpace(value)
+
+	// If user just pressed Enter without typing anything, keep the current value
+	if value == "" && field.DefaultValue != "" {
+		// Ensure the field has a value by using DefaultValue if Value is empty
+		if field.Value == "" {
+			field.Value = field.DefaultValue
+		}
+		return true
+	}
 
 	// Validate required fields
 	if field.IsRequired && value == "" {
@@ -227,7 +268,10 @@ func (f *InteractiveForm) validateCurrentField() bool {
 		return false
 	}
 
-	field.Value = value
+	// Only update the value if something was actually entered
+	if value != "" {
+		field.Value = value
+	}
 	return true
 }
 

@@ -24,7 +24,7 @@ func ValidateCommand() *cli.Command {
 				return err
 			}
 
-			os.Stderr.WriteString("✅ Recovery key validated\nYou can now login with 'passenger-go login'")
+			os.Stderr.WriteString("✅ Recovery key validated\nYou can now login with 'passenger-go login'\n")
 			return nil
 		},
 	}
