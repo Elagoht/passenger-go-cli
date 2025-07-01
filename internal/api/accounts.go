@@ -57,21 +57,17 @@ func CreateAccount(account schemas.UpsertAccountRequest) (*schemas.Account, erro
 func UpdateAccount(
 	accountID string,
 	account schemas.UpsertAccountRequest,
-) (*schemas.Account, error) {
+) error {
 	endpoint := "/accounts/" + accountID
 
-	response, _, err := Put[schemas.Account](endpoint, map[string]string{
+	_, _, err := Put[schemas.Account](endpoint, map[string]string{
 		"platform":   account.Platform,
 		"identifier": account.Identifier,
 		"passphrase": account.Passphrase,
 		"url":        account.URL,
 		"notes":      account.Notes,
 	})
-	if err != nil {
-		return nil, err
-	}
-
-	return response, nil
+	return err
 }
 
 func DeleteAccount(accountID string) error {
@@ -88,6 +84,6 @@ func UpdateAccountPassphrase(accountID string, passphrase string) error {
 		"passphrase": passphrase,
 	}
 
-	_, _, err := Patch[any](endpoint, request)
+	_, _, err := Put[any](endpoint, request)
 	return err
 }

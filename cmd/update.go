@@ -62,7 +62,7 @@ func UpdateCommand() *cli.Command {
 			}
 
 			// Update the account
-			account, err := api.UpdateAccount(accountID, updatedAccount)
+			err = api.UpdateAccount(accountID, updatedAccount)
 			if err != nil {
 				return cli.Exit("Failed to update account: "+err.Error(), 1)
 			}
@@ -78,7 +78,6 @@ func UpdateCommand() *cli.Command {
 				os.Stdout.WriteString("Passphrase updated successfully\n")
 			}
 
-			os.Stdout.WriteString("Account updated successfully with Id: " + account.ID + "\n")
 			return nil
 		},
 	}

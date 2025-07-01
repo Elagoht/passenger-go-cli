@@ -36,8 +36,8 @@ func NewInteractiveForm() *InteractiveForm {
 }
 
 // AddField adds a field to the form
-func (f *InteractiveForm) AddField(key, label string, isPassword, isRequired bool) {
-	f.fields = append(f.fields, &FormField{
+func (form *InteractiveForm) AddField(key, label string, isPassword, isRequired bool) {
+	form.fields = append(form.fields, &FormField{
 		Key:          key,
 		Label:        label,
 		Value:        "",
@@ -48,8 +48,8 @@ func (f *InteractiveForm) AddField(key, label string, isPassword, isRequired boo
 }
 
 // AddFieldWithDefault adds a field to the form with a default value
-func (f *InteractiveForm) AddFieldWithDefault(key, label, defaultValue string, isPassword, isRequired bool) {
-	f.fields = append(f.fields, &FormField{
+func (form *InteractiveForm) AddFieldWithDefault(key, label, defaultValue string, isPassword, isRequired bool) {
+	form.fields = append(form.fields, &FormField{
 		Key:          key,
 		Label:        label,
 		Value:        defaultValue,
@@ -60,60 +60,68 @@ func (f *InteractiveForm) AddFieldWithDefault(key, label, defaultValue string, i
 }
 
 // GetValues returns all field values as a map
-func (f *InteractiveForm) GetValues() map[string]string {
+func (form *InteractiveForm) GetValues() map[string]string {
 	values := make(map[string]string)
-	for _, field := range f.fields {
+	for _, field := range form.fields {
 		values[field.Key] = field.Value
 	}
 	return values
 }
 
 // Run starts the interactive form
-func (f *InteractiveForm) Run() error {
-	if len(f.fields) == 0 {
+func (form *InteractiveForm) Run() error {
+	if len(form.fields) == 0 {
 		return fmt.Errorf("no fields defined")
 	}
 
 	// Store original terminal state
 	var err error
-	f.originalState, err = term.GetState(int(os.Stdin.Fd()))
+	form.originalState, err = term.GetState(int(os.Stdin.Fd()))
 	if err != nil {
 		return fmt.Errorf("failed to get terminal state: %w", err)
 	}
 
 	// Ensure terminal state is restored on exit
 	defer func() {
-		if f.originalState != nil {
-			term.Restore(int(os.Stdin.Fd()), f.originalState)
+		if form.originalState != nil {
+			term.Restore(int(os.Stdin.Fd()), form.originalState)
 		}
 		fmt.Println() // Add newline at the end
 	}()
 
-	fmt.Println("Interactive Form - Use arrow keys to navigate, Enter to confirm, Ctrl+C to quit")
-	fmt.Println("Guide: ↑/↓ Navigate | Enter Confirm | Ctrl+C Quit")
+	fmt.Println("Guide: ↑/↓ Navigate | Enter Confirm | Ctrl+D Clear Field | Ctrl+S Save & Quit | Ctrl+C Quit")
 	fmt.Println()
 
 	for {
-		f.displayForm()
-		action := f.getUserInput()
+		form.displayForm()
+		action := form.getUserInput()
 
 		switch action {
 		case "up":
-			if f.current > 0 {
-				f.current--
+			if form.current > 0 {
+				form.current--
 			}
 		case "down":
-			if f.current < len(f.fields)-1 {
-				f.current++
+			if form.current < len(form.fields)-1 {
+				form.current++
 			}
 		case "enter":
-			if f.validateCurrentField() {
-				if f.current == len(f.fields)-1 {
+			if form.validateCurrentField("") {
+				if form.current == len(form.fields)-1 {
 					// Last field completed, finish form
 					return nil
 				}
-				f.current++
+				form.current++
 			}
+		case "clear":
+			if form.validateCurrentField("clear") {
+				if form.current == len(form.fields)-1 {
+					return nil
+				}
+				form.current++
+			}
+		case "savequit":
+			return nil
 		case "quit":
 			return fmt.Errorf("form cancelled by user")
 		}
@@ -121,25 +129,21 @@ func (f *InteractiveForm) Run() error {
 }
 
 // displayForm shows the current form state
-func (f *InteractiveForm) displayForm() {
+func (form *InteractiveForm) displayForm() {
 	// Clear screen (simple approach)
 	fmt.Print("\033[H\033[2J")
 
-	fmt.Println("Interactive Form - Use arrow keys to navigate, Enter to confirm, Ctrl+C to keep current value")
-	fmt.Println("Guide: ↑/↓ Navigate | Enter Confirm | Ctrl+C Keep Current Value")
+	fmt.Println("Guide: ↑/↓ Navigate | Enter Confirm | Ctrl+D Clear Field | Ctrl+S Save & Quit | Ctrl+C Quit")
 	fmt.Println()
 
-	for i, field := range f.fields {
+	for i, field := range form.fields {
 		indicator := " "
-		if i == f.current {
+		if i == form.current {
 			indicator = ">"
 		}
 
-		// Use Value if set, otherwise use DefaultValue for display
+		// Use Value for display (empty string means cleared field)
 		displayValue := field.Value
-		if displayValue == "" {
-			displayValue = field.DefaultValue
-		}
 
 		if field.IsPassword && displayValue != "" {
 			displayValue = strings.Repeat("*", len(displayValue))
@@ -154,7 +158,7 @@ func (f *InteractiveForm) displayForm() {
 }
 
 // getUserInput handles user input and returns the action
-func (f *InteractiveForm) getUserInput() string {
+func (form *InteractiveForm) getUserInput() string {
 	// Set terminal to raw mode for single character input
 	oldState, err := term.MakeRaw(int(os.Stdin.Fd()))
 	if err != nil {
@@ -175,9 +179,17 @@ func (f *InteractiveForm) getUserInput() string {
 		return "quit"
 	}
 
-	// Check for Ctrl+C
+	// Check for Ctrl+C (quit)
 	if buf[0] == 3 {
 		return "quit"
+	}
+	// Check for Ctrl+D (clear)
+	if buf[0] == 4 {
+		return "clear"
+	}
+	// Check for Ctrl+S (save and quit)
+	if buf[0] == 19 {
+		return "savequit"
 	}
 
 	// Check for arrow keys
@@ -213,17 +225,18 @@ func (f *InteractiveForm) getUserInput() string {
 }
 
 // validateCurrentField validates and gets input for the current field
-func (f *InteractiveForm) validateCurrentField() bool {
-	field := f.fields[f.current]
+func (form *InteractiveForm) validateCurrentField(action string) bool {
+	field := form.fields[form.current]
 
 	// Restore terminal to original state for input
-	if f.originalState != nil {
-		term.Restore(int(os.Stdin.Fd()), f.originalState)
+	if form.originalState != nil {
+		term.Restore(int(os.Stdin.Fd()), form.originalState)
 	}
 
+	// Show current value for non-password fields
 	if field.DefaultValue != "" && !field.IsPassword {
 		fmt.Printf(
-			"\nEnter %s (current: %s, press Ctrl+C to keep): ",
+			"\nEnter %s (current: %s): ",
 			field.Label,
 			field.DefaultValue,
 		)
@@ -231,33 +244,31 @@ func (f *InteractiveForm) validateCurrentField() bool {
 		fmt.Printf("\nEnter %s: ", field.Label)
 	}
 
+	if action == "clear" {
+		field.Value = ""
+		return true
+	}
+
 	var value string
 	var err error
 
 	if field.IsPassword {
-		value, err = f.readPassword()
+		value, err = form.readPassword()
 	} else {
-		value, err = f.readString()
+		value, err = form.readString()
 	}
 
 	if err != nil {
-		// If there's an error (like Ctrl+C), keep the current value
-		// Ensure the field has a value by using DefaultValue if Value is empty
-		if field.Value == "" {
-			field.Value = field.DefaultValue
-		}
-		return true
+		// If there's an error (like Ctrl+C), quit
+		return false
 	}
 
 	// Trim whitespace
 	value = strings.TrimSpace(value)
 
 	// If user just pressed Enter without typing anything, keep the current value
-	if value == "" && field.DefaultValue != "" {
-		// Ensure the field has a value by using DefaultValue if Value is empty
-		if field.Value == "" {
-			field.Value = field.DefaultValue
-		}
+	if value == "" {
+		// Keep the current value (could be empty if field was cleared)
 		return true
 	}
 
@@ -268,15 +279,13 @@ func (f *InteractiveForm) validateCurrentField() bool {
 		return false
 	}
 
-	// Only update the value if something was actually entered
-	if value != "" {
-		field.Value = value
-	}
+	// Update the value (empty string is valid for clearing fields)
+	field.Value = value
 	return true
 }
 
 // readPassword reads a password input with masking
-func (f *InteractiveForm) readPassword() (string, error) {
+func (form *InteractiveForm) readPassword() (string, error) {
 	bytePassword, err := term.ReadPassword(int(syscall.Stdin))
 	if err != nil {
 		return "", err
@@ -285,7 +294,7 @@ func (f *InteractiveForm) readPassword() (string, error) {
 }
 
 // readString reads a regular string input
-func (f *InteractiveForm) readString() (string, error) {
+func (form *InteractiveForm) readString() (string, error) {
 	reader := bufio.NewReader(os.Stdin)
 	input, err := reader.ReadString('\n')
 	if err != nil {
